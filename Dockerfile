@@ -1,5 +1,5 @@
 FROM ubuntu:14.04.3
-MAINTAINER Victor Hernandez <victor.hernandez@iic.uam.es>
+MAINTAINER Sharoon Thomas <sharoon.thomas@openlabs.co.in>
 
 RUN sed 's/main$/main universe/' -i /etc/apt/sources.list
 RUN apt-get update
