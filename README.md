@@ -44,7 +44,7 @@ This is a convenient way to use the service from command line
 utilities like curl.
 
 ```sh
-curl -X POST -vv -F 'file=@path/to/local/file.html' http://<docker-host>:<port>/ -o path/to/output/file.pdf
+curl -X POST -vv -F 'fichs=@path/to/local/file.html' http://<docker-host>:<port>/ -o path/to/output/file.pdf
 ```
 
 where:
@@ -55,7 +55,7 @@ where:
 To add multiple html files simply add them to the curl command:
 
 ```sh
-curl -X POST -vv -F 'file=@file1.html' -F 'file=@file2.html' -F 'file=@file3.html' http://<docker-host>:<port>/ -o path/to/output/file.pdf
+curl -X POST -vv -F 'fichs=@file1.html' -F 'fichs=@file2.html' -F 'fichs=@file3.html' http://<docker-host>:<port>/ -o path/to/output/file.pdf
 ```
 
 ### JSON API
