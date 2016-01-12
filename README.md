@@ -103,6 +103,21 @@ with open('/path/to/local/file.pdf', 'wb') as f:
     f.write(response.content)
 ```
 
+PHP example
+```php
+$wkHtmlToPdfUrl = 'http://wkhtmltopdf:80';
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $wkHtmlToPdfUrl);
+curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json')); // Assuming you're requesting JSON
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+$body = json_encode([
+    'contents' => base64_encode($html)
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+echo curl_exec($ch);
+
+```
+
 ## TODO
 
 * Implement conversion of URLs to PDF
