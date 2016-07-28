@@ -1,4 +1,5 @@
-# docker-wkhtmltopdf-aas
+# docker-wkhtmltopdf-aas 
+[![Build Status](https://travis-ci.org/Traum-Ferienwohnungen/docker-wkhtmltopdf-aas.svg?branch=master)](https://travis-ci.org/Traum-Ferienwohnungen/docker-wkhtmltopdf-aas)
 
 wkhtmltopdf in a docker container as a web service.
 
@@ -11,19 +12,8 @@ Run the container with docker run and binding the ports to the host.
 The web service is exposed on port 80 in the container.
 
 ```sh
-docker run -d -P openlabs/docker-wkhtmltopdf-aas
+docker run -d -e API_TOKEN='travisci-test123456789' -p 127.0.0.1:80:5555
 ```
-
-The container now runs as a daemon.
-
-Find the port that the container is bound to:
-
-```sh
-docker port 071599a1373e 80
-```
-
-where 071599a1373e is the container SHA that docker assigned when
-`docker run` was executed in the previous command.
 
 Take a note of the public port number where docker binds to.
 
@@ -101,6 +91,22 @@ response = requests.post(url, data=json.dumps(data), headers=headers)
 # Save the response contents to a file
 with open('/path/to/local/file.pdf', 'wb') as f:
     f.write(response.content)
+```
+
+PHP example
+```php
+$url = 'http://<docker_host>:<port>/';
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json')); // Assuming you're requesting JSON
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+$body = json_encode([
+    'contents' => base64_encode($html)
+]);
+# print response
+curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+echo curl_exec($ch);
+
 ```
 
 ## TODO
