@@ -33,11 +33,14 @@ def application(request):
             payload = json.loads(request.data)
             source_file.write(payload['contents'].decode('base64'))
             options = payload.get('options', {})
+            ignoreErrors = payload.get('ignoreerrors',False)
         elif request.files:
             # First check if any files were uploaded
             source_file.write(request.files['file'].read())
             # Load any options that may have been provided in options
             options = json.loads(request.form.get('options', '{}'))
+            # Optionally bypass any excpetions thrown from wkhtmltopdf
+            ignoreErrors = json.loads(request.form.get('ignoreerrors', 'false'))
 
         source_file.flush()
 
@@ -56,7 +59,11 @@ def application(request):
         args += [file_name, file_name + ".pdf"]
 
         # Execute the command using executor
-        execute(' '.join(args))
+        try:
+            execute(' '.join(args))
+        except:
+            if not ignoreErrors:
+                raise
 
         return Response(
             wrap_file(request.environ, open(file_name + '.pdf')),
