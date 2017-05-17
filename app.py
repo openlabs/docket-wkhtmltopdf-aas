@@ -21,6 +21,9 @@ def application(request):
     request data, with keys 'base64_html' and 'options'.
     The application will return a response with the PDF file.
     """
+    if request.path == '/_ping':
+        return Response('Pong!')
+
     if request.method != 'POST':
         return
 
