@@ -18,7 +18,7 @@ def application(request):
     """
     To use this application, the user must send a POST request with
     base64 or form encoded encoded HTML content and the wkhtmltopdf Options in
-    request data, with keys 'base64_html' and 'options'.
+    request data, with keys 'content' and 'options'.
     The application will return a response with the PDF file.
     """
     if request.method != 'POST':
