@@ -13,12 +13,43 @@ from werkzeug.wrappers import Request, Response
 from executor import execute
 
 
+def generate(url, options):
+    # Evaluate argument to run with subprocess
+    args = ['wkhtmltopdf']
+
+    # Add Global Options
+    if options:
+        for option, value in options.items():
+            args.append('--%s' % option)
+            if value:
+                args.append('"%s"' % value)
+
+    # Create unique output file name
+    output_filename = tempfile.mktemp()
+    # Add source file name and output file name
+    args += [url, output_filename + ".pdf"]
+
+    # Execute the command using executor
+    execute(' '.join(args))
+
+    return output_filename
+
+
+def respond(request, file_name):
+    return Response(
+        wrap_file(request.environ, open(file_name + '.pdf')),
+        mimetype='application/pdf',
+    )
+
+
 @Request.application
 def application(request):
     """
-    To use this application, the user must send a POST request with
-    base64 or form encoded encoded HTML content and the wkhtmltopdf Options in
-    request data, with keys 'base64_html' and 'options'.
+    To use this application, the user sends a POST request with
+    base64 or form encoded HTML content and the wkhtmltopdf Options in
+    request data, with keys 'content' and 'options'. The 'content' parameter
+    may be omitted in favor of 'url', the value of which should then be a
+    string representing a target URL readable by the server.
     The application will return a response with the PDF file.
     """
     if request.method != 'POST':
@@ -26,13 +57,19 @@ def application(request):
 
     request_is_json = request.content_type.endswith('json')
 
+    if request_is_json:
+        # If a JSON payload is there, all data is in the payload
+        payload = json.loads(request.data)
+        options = payload.get('options', {})
+        url = payload.get('url')
+        if url:
+            file_name = generate(url, options)
+            return respond(request, file_name)
+        else:
+            contents = payload.get('contents')
     with tempfile.NamedTemporaryFile(suffix='.html') as source_file:
-
         if request_is_json:
-            # If a JSON payload is there, all data is in the payload
-            payload = json.loads(request.data)
-            source_file.write(payload['contents'].decode('base64'))
-            options = payload.get('options', {})
+            source_file.write(contents.decode('base64'))
         elif request.files:
             # First check if any files were uploaded
             source_file.write(request.files['file'].read())
@@ -41,28 +78,8 @@ def application(request):
 
         source_file.flush()
 
-        # Evaluate argument to run with subprocess
-        args = ['wkhtmltopdf']
-
-        # Add Global Options
-        if options:
-            for option, value in options.items():
-                args.append('--%s' % option)
-                if value:
-                    args.append('"%s"' % value)
-
-        # Add source file name and output file name
-        file_name = source_file.name
-        args += [file_name, file_name + ".pdf"]
-
-        # Execute the command using executor
-        execute(' '.join(args))
-
-        return Response(
-            wrap_file(request.environ, open(file_name + '.pdf')),
-            mimetype='application/pdf',
-        )
-
+        file_name = generate(source_file.name, options)
+        return respond(request, file_name)
 
 if __name__ == '__main__':
     from werkzeug.serving import run_simple
