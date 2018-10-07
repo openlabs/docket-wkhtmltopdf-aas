@@ -32,6 +32,14 @@ Take a note of the public port number where docker binds to.
 There are multiple ways to generate a PDF of HTML using the
 service.
 
+### Generating from a URL
+
+A GET request may be sent to the server with the source `url` and any desired wkhtmltopdf options set as url parameters.
+
+```sh
+curl "http://<docker-host>:<port>/?url=https://github.com/openlabs/docker-wkhtmltopdf-aas&page-width=210mm&page-height=297mm" -o path/to/output/file.pdf
+```
+
 ### Uploading a HTML file
 
 This is a convenient way to use the service from command line
