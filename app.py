@@ -10,17 +10,58 @@ import tempfile
 
 from werkzeug.wsgi import wrap_file
 from werkzeug.wrappers import Request, Response
+from werkzeug.urls import url_decode
 from executor import execute
+
+
+def generate(url, options):
+    # Evaluate argument to run with subprocess
+    args = ['wkhtmltopdf']
+
+    # Add Global Options
+    if options:
+        for option, value in options.items():
+            args.append('--%s' % option)
+            if value:
+                args.append('"%s"' % value)
+
+    # Create unique output file name
+    output_filename = tempfile.mktemp()
+    # Add source file name and output file name
+    args += [url, output_filename + ".pdf"]
+
+    # Execute the command using executor
+    execute(' '.join(args))
+
+    return output_filename
+
+
+def respond(request, file_name):
+    return Response(
+        wrap_file(request.environ, open(file_name + '.pdf')),
+        mimetype='application/pdf',
+    )
 
 
 @Request.application
 def application(request):
     """
-    To use this application, the user must send a POST request with
-    base64 or form encoded encoded HTML content and the wkhtmltopdf Options in
-    request data, with keys 'base64_html' and 'options'.
+    To use this application, the user sends a GET request with the parameter
+    'url' set to the desired source location and the desired wkhtmltopdf
+    options also encoded as url-parameters, or a POST request with
+    base64 or form encoded HTML content and the wkhtmltopdf Options in
+    request data, with keys 'content' and 'options'.
     The application will return a response with the PDF file.
     """
+    if request.method == 'GET':
+        params = url_decode(request.query_string)
+        url = params.get('url', '')
+        options = {k: v for k, v in params.items() if k != 'url'}
+        if not url:
+            return
+        file_name = generate(url, options)
+        return respond(request, file_name)
+
     if request.method != 'POST':
         return
 
@@ -41,28 +82,8 @@ def application(request):
 
         source_file.flush()
 
-        # Evaluate argument to run with subprocess
-        args = ['wkhtmltopdf']
-
-        # Add Global Options
-        if options:
-            for option, value in options.items():
-                args.append('--%s' % option)
-                if value:
-                    args.append('"%s"' % value)
-
-        # Add source file name and output file name
-        file_name = source_file.name
-        args += [file_name, file_name + ".pdf"]
-
-        # Execute the command using executor
-        execute(' '.join(args))
-
-        return Response(
-            wrap_file(request.environ, open(file_name + '.pdf')),
-            mimetype='application/pdf',
-        )
-
+        file_name = generate(source_file.name, options)
+        return respond(request, file_name)
 
 if __name__ == '__main__':
     from werkzeug.serving import run_simple
