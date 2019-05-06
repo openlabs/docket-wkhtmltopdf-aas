@@ -24,7 +24,7 @@ def application(request):
     if request.method != 'POST':
         return
 
-    request_is_json = request.content_type.endswith('json')
+    request_is_json = request.headers.get('content-type').endswith('json')
 
     with tempfile.NamedTemporaryFile(suffix='.html') as source_file:
 
