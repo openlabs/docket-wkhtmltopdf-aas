@@ -7,6 +7,8 @@
 """
 import json
 import tempfile
+import ushlex as shlex
+import os
 
 from werkzeug.wsgi import wrap_file
 from werkzeug.wrappers import Request, Response
@@ -26,7 +28,8 @@ def application(request):
 
     request_is_json = request.content_type.endswith('json')
 
-    with tempfile.NamedTemporaryFile(suffix='.html') as source_file:
+    workdir=os.environ.get('WKHTMLTOPDF_WORKDIR')
+    with tempfile.NamedTemporaryFile(suffix='.html', dir=workdir, delete=True) as source_file:
 
         if request_is_json:
             # If a JSON payload is there, all data is in the payload
@@ -44,6 +47,9 @@ def application(request):
         # Evaluate argument to run with subprocess
         args = ['wkhtmltopdf']
 
+        # Add ENV options
+        args += shlex.split(os.environ.get('WKHTMLTOPDF_OPTS'))
+
         # Add Global Options
         if options:
             for option, value in options.items():
@@ -55,13 +61,18 @@ def application(request):
         file_name = source_file.name
         args += [file_name, file_name + ".pdf"]
 
-        # Execute the command using executor
-        execute(' '.join(args))
+        try:
+            # Execute the command using executor
+            execute(' '.join(args))
 
-        return Response(
-            wrap_file(request.environ, open(file_name + '.pdf')),
-            mimetype='application/pdf',
-        )
+            pdf = open(file_name + '.pdf')
+            return Response(
+                wrap_file(request.environ, pdf),
+                mimetype='application/pdf',
+            )
+        finally:
+            os.remove(file_name + '.pdf')
+
 
 
 if __name__ == '__main__':
