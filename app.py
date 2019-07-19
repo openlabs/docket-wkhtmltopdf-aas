@@ -7,7 +7,6 @@
 """
 import json
 import tempfile
-import ushlex as shlex
 import os
 
 from werkzeug.wsgi import wrap_file
@@ -45,11 +44,10 @@ def application(request):
         source_file.flush()
 
         # Evaluate argument to run with subprocess
-        args = ['wkhtmltopdf']
-
-        # Add ENV options
-        args += shlex.split(os.environ.get('WKHTMLTOPDF_OPTS'))
-
+        args = []
+        
+        env_options = os.environ.get('WKHTMLTOPDF_OPTS') or ''
+        
         # Add Global Options
         if options:
             for option, value in options.items():
@@ -63,7 +61,7 @@ def application(request):
 
         try:
             # Execute the command using executor
-            execute(' '.join(args))
+            execute('wkhtmltopdf ' + env_options + ' ' + ' '.join(args))
 
             pdf = open(file_name + '.pdf')
             return Response(
