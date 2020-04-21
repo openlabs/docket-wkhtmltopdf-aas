@@ -1,14 +1,15 @@
-FROM openlabs/docker-wkhtmltopdf:latest
-MAINTAINER Sharoon Thomas <sharoon.thomas@openlabs.co.in>
+FROM madnight/docker-alpine-wkhtmltopdf
+MAINTAINER Artem Khizhka <artem.khizhka.work@gmail.com>
 
 # Install dependencies for running web service
-RUN apt-get install -y python-pip
+RUN apk add --update py-pip
+RUN apk add --update bash
 RUN pip install werkzeug executor gunicorn
 
 ADD app.py /app.py
 EXPOSE 80
 
-ENTRYPOINT ["usr/local/bin/gunicorn"]
+ENTRYPOINT ["gunicorn"]
 
 # Show the extended help
 CMD ["-b", "0.0.0.0:80", "--log-file", "-", "app:application"]
